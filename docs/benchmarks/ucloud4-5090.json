@@ -1,0 +1,95 @@
+{
+  "environment": {
+    "python": "3.11.13",
+    "platform": "Linux-5.15.0-113-generic-x86_64-with-glibc2.35",
+    "torch": "2.10.0+cu128",
+    "cuda_runtime": "12.8",
+    "cuda_available": true,
+    "device": "cuda",
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "gpu_memory_gib": 31.35833740234375,
+    "compute_capability": [
+      12,
+      0
+    ],
+    "bf16_supported": true
+  },
+  "samples": [
+    {
+      "request_index": 0,
+      "audio_seconds": [
+        69.95866666666667,
+        69.95866666666667
+      ],
+      "reference_seconds": [
+        21.513582637999207,
+        20.361356323992368
+      ],
+      "resident_seconds": [
+        16.678249043005053,
+        16.70881198599818
+      ],
+      "reference_mean": 20.937469480995787,
+      "resident_mean": 16.693530514501617,
+      "latency_reduction_percent": 20.269588788397975,
+      "speedup": 1.2542265677597362,
+      "resident_peak_allocated_gib": 9.564250469207764
+    },
+    {
+      "request_index": 1,
+      "audio_seconds": [
+        242.23866666666666,
+        242.23866666666666
+      ],
+      "reference_seconds": [
+        66.04874263901729,
+        66.29983494899352
+      ],
+      "resident_seconds": [
+        61.930333233991405,
+        61.83484341800795
+      ],
+      "reference_mean": 66.1742887940054,
+      "resident_mean": 61.88258832599968,
+      "latency_reduction_percent": 6.48545008374084,
+      "speedup": 1.069352310304102,
+      "resident_peak_allocated_gib": 9.613877773284912
+    }
+  ],
+  "equality": [
+    {
+      "sample": "000-000",
+      "audio.flac": true,
+      "prefix.npy": true,
+      "semantic.npy": true,
+      "latent.npy": true
+    },
+    {
+      "sample": "001-000",
+      "audio.flac": true,
+      "prefix.npy": true,
+      "semantic.npy": true,
+      "latent.npy": true
+    },
+    {
+      "sample": "000-001",
+      "audio.flac": true,
+      "prefix.npy": true,
+      "semantic.npy": true,
+      "latent.npy": true
+    },
+    {
+      "sample": "001-001",
+      "audio.flac": true,
+      "prefix.npy": true,
+      "semantic.npy": true,
+      "latent.npy": true
+    }
+  ],
+  "tested_code_commit": "ef57805",
+  "model_revisions": {
+    "m-a-p/YuE2-3B": "29b3558dd46954a0cd9021dc76d5c91864a0f1c7",
+    "m-a-p/YuE2-Vae": "9a94e1d0ea9f8087e98f77fa88df4a4068104d2a"
+  },
+  "note": "2026-09-14; two requests, two measured repeats per profile, one full warmup per profile; generation excludes load, warmup, save, queue and network; 32 midpoint steps, BF16; sequential GPU 5; all four paired outputs identical."
+}

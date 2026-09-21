@@ -1,0 +1,770 @@
+{
+  "safe_max_batch": 10,
+  "completed": true,
+  "errors": [],
+  "probes": [
+    {
+      "batch": 1,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 196.96808827241406,
+        "mean_seconds": 1.2997029226680752
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 166.84378546485163,
+        "mean_seconds": 1.5343694060090154
+      }
+    },
+    {
+      "batch": 2,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 308.7259138262643,
+        "mean_seconds": 1.6584289723347563
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 252.82708693080863,
+        "mean_seconds": 2.0250994710077066
+      }
+    },
+    {
+      "batch": 3,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 442.6339903898359,
+        "mean_seconds": 1.7350678363485106
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 339.40306938600384,
+        "mean_seconds": 2.262796271669989
+      }
+    },
+    {
+      "batch": 4,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 573.9621237302965,
+        "mean_seconds": 1.7840898513386492
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 413.51496361219495,
+        "mean_seconds": 2.476331185345771
+      }
+    },
+    {
+      "batch": 5,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 688.5085567532778,
+        "mean_seconds": 1.8590909109916538
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 467.00619152537143,
+        "mean_seconds": 2.740863019008733
+      }
+    },
+    {
+      "batch": 6,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 799.943953513252,
+        "mean_seconds": 1.9201345209924814
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 522.3258295490342,
+        "mean_seconds": 2.9406931710157855
+      }
+    },
+    {
+      "batch": 7,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 919.3061909527084,
+        "mean_seconds": 1.9492961296637077
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 571.6692652162074,
+        "mean_seconds": 3.1346796286525205
+      }
+    },
+    {
+      "batch": 8,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 1017.3403855557066,
+        "mean_seconds": 2.0130922050060085
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 603.2544093171656,
+        "mean_seconds": 3.3949192386644427
+      }
+    },
+    {
+      "batch": 9,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 1128.0831227823724,
+        "mean_seconds": 2.0424026859982405
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 640.7504327275,
+        "mean_seconds": 3.59578375966521
+      }
+    },
+    {
+      "batch": 10,
+      "forward": {
+        "repeats": 3,
+        "tokens_per_second": 1248.1579356450652,
+        "mean_seconds": 2.0510224923394467
+      },
+      "forward_sampling": {
+        "repeats": 3,
+        "tokens_per_second": 684.2452925685783,
+        "mean_seconds": 3.7413483553391416
+      }
+    }
+  ],
+  "workloads": {
+    "short": {
+      "candidates": [
+        {
+          "batch": 1,
+          "repeats": 1,
+          "successful_songs": 1,
+          "all_nontruncated": true,
+          "rpm": 3.5909641158156664,
+          "mean_batch_seconds": 16.7086047269986,
+          "normalized_audio_throughput": 4.186984359838494,
+          "audio_seconds": [
+            [
+              69.95866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            3.5909641158156664
+          ],
+          "peak_torch_allocated_gib": 9.668866634368896,
+          "gpu_memory_peak_gib": 14.03839111328125,
+          "cpu_cores_mean": 1.003678322038349,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 2,
+          "repeats": 1,
+          "successful_songs": 2,
+          "all_nontruncated": true,
+          "rpm": 4.8112000055787005,
+          "mean_batch_seconds": 24.941802432003897,
+          "normalized_audio_throughput": 5.516735757507897,
+          "audio_seconds": [
+            [
+              68.79866666666666,
+              68.79866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            4.8112000055787005
+          ],
+          "peak_torch_allocated_gib": 9.668866634368896,
+          "gpu_memory_peak_gib": 15.07940673828125,
+          "cpu_cores_mean": 1.0051142147515628,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 3,
+          "repeats": 1,
+          "successful_songs": 3,
+          "all_nontruncated": true,
+          "rpm": 5.3241682862257145,
+          "mean_batch_seconds": 33.808097400993574,
+          "normalized_audio_throughput": 6.88580600200112,
+          "audio_seconds": [
+            [
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            5.3241682862257145
+          ],
+          "peak_torch_allocated_gib": 10.672875881195068,
+          "gpu_memory_peak_gib": 16.19464111328125,
+          "cpu_cores_mean": 1.0087908350979022,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 4,
+          "repeats": 1,
+          "successful_songs": 4,
+          "all_nontruncated": true,
+          "rpm": 6.04297788548477,
+          "mean_batch_seconds": 39.71551849899697,
+          "normalized_audio_throughput": 7.823507747343495,
+          "audio_seconds": [
+            [
+              77.67866666666667,
+              77.67866666666667,
+              77.67866666666667,
+              77.67866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            6.04297788548477
+          ],
+          "peak_torch_allocated_gib": 11.7195725440979,
+          "gpu_memory_peak_gib": 17.00909423828125,
+          "cpu_cores_mean": 1.010431036009089,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 5,
+          "repeats": 1,
+          "successful_songs": 5,
+          "all_nontruncated": true,
+          "rpm": 7.5282225899905155,
+          "mean_batch_seconds": 39.85004380700411,
+          "normalized_audio_throughput": 8.431442006954045,
+          "audio_seconds": [
+            [
+              67.19866666666667,
+              67.19866666666667,
+              67.19866666666667,
+              67.19866666666667,
+              67.19866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            7.5282225899905155
+          ],
+          "peak_torch_allocated_gib": 12.738518238067627,
+          "gpu_memory_peak_gib": 18.17706298828125,
+          "cpu_cores_mean": 1.01177991660625,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 6,
+          "repeats": 1,
+          "successful_songs": 6,
+          "all_nontruncated": true,
+          "rpm": 7.3796297385552805,
+          "mean_batch_seconds": 48.7829352899862,
+          "normalized_audio_throughput": 9.219453428263096,
+          "audio_seconds": [
+            [
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            7.3796297385552805
+          ],
+          "peak_torch_allocated_gib": 13.795938968658447,
+          "gpu_memory_peak_gib": 18.92315673828125,
+          "cpu_cores_mean": 1.011750518346473,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 7,
+          "repeats": 1,
+          "successful_songs": 7,
+          "all_nontruncated": true,
+          "rpm": 7.766776790435291,
+          "mean_batch_seconds": 54.07648646697635,
+          "normalized_audio_throughput": 9.703120541810703,
+          "audio_seconds": [
+            [
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667,
+              74.95866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            7.766776790435291
+          ],
+          "peak_torch_allocated_gib": 14.80436658859253,
+          "gpu_memory_peak_gib": 19.72003173828125,
+          "cpu_cores_mean": 1.0132567160558583,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 8,
+          "repeats": 1,
+          "successful_songs": 8,
+          "all_nontruncated": true,
+          "rpm": 8.030901950208836,
+          "mean_batch_seconds": 59.76912717599771,
+          "normalized_audio_throughput": 10.11340405814188,
+          "audio_seconds": [
+            [
+              75.55866666666667,
+              75.55866666666667,
+              75.55866666666667,
+              75.55866666666667,
+              75.55866666666667,
+              75.55866666666667,
+              75.55866666666667,
+              75.55866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            8.030901950208836
+          ],
+          "peak_torch_allocated_gib": 15.874260425567627,
+          "gpu_memory_peak_gib": 20.78448486328125,
+          "cpu_cores_mean": 1.0142196810489743,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 9,
+          "repeats": 2,
+          "successful_songs": 18,
+          "all_nontruncated": true,
+          "rpm": 8.128381645870663,
+          "mean_batch_seconds": 66.43388850649353,
+          "normalized_audio_throughput": 10.512526297956148,
+          "audio_seconds": [
+            [
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667
+            ],
+            [
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667,
+              77.59866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            8.136800967391494,
+            8.11997972964333
+          ],
+          "peak_torch_allocated_gib": 16.897401332855225,
+          "gpu_memory_peak_gib": 22.60479736328125,
+          "cpu_cores_mean": 1.0151532249595123,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 10,
+          "repeats": 2,
+          "successful_songs": 20,
+          "all_nontruncated": true,
+          "rpm": 8.563731800943582,
+          "mean_batch_seconds": 70.06291345250793,
+          "normalized_audio_throughput": 10.693056136960422,
+          "audio_seconds": [
+            [
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667
+            ],
+            [
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667,
+              74.91866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            8.56495280075634,
+            8.562511149207007
+          ],
+          "peak_torch_allocated_gib": 17.953562259674072,
+          "gpu_memory_peak_gib": 24.16339111328125,
+          "cpu_cores_mean": 1.0153693821939827,
+          "cpu_throttled_seconds": 0
+        }
+      ],
+      "raw_rpm_best_batch": 10,
+      "duration_normalized_best_batch": 10
+    },
+    "long": {
+      "candidates": [
+        {
+          "batch": 1,
+          "repeats": 1,
+          "successful_songs": 1,
+          "all_nontruncated": true,
+          "rpm": 0.9705692028050057,
+          "mean_batch_seconds": 61.819394048972754,
+          "normalized_audio_throughput": 3.918489826586903,
+          "audio_seconds": [
+            [
+              242.23866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            0.9705692028050057
+          ],
+          "peak_torch_allocated_gib": 9.700305461883545,
+          "gpu_memory_peak_gib": 16.65753173828125,
+          "cpu_cores_mean": 1.0037781548952613,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 2,
+          "repeats": 1,
+          "successful_songs": 2,
+          "all_nontruncated": true,
+          "rpm": 1.715117955598712,
+          "mean_batch_seconds": 69.96603330300422,
+          "normalized_audio_throughput": 5.1853351720277585,
+          "audio_seconds": [
+            [
+              181.39866666666666,
+              181.39866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            1.715117955598712
+          ],
+          "peak_torch_allocated_gib": 10.033123016357422,
+          "gpu_memory_peak_gib": 17.64385986328125,
+          "cpu_cores_mean": 1.006137212157141,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 3,
+          "repeats": 1,
+          "successful_songs": 3,
+          "all_nontruncated": true,
+          "rpm": 2.1622390038505745,
+          "mean_batch_seconds": 83.24704146001022,
+          "normalized_audio_throughput": 6.391530445626658,
+          "audio_seconds": [
+            [
+              177.35866666666666,
+              177.35866666666666,
+              177.35866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.1622390038505745
+          ],
+          "peak_torch_allocated_gib": 11.16115665435791,
+          "gpu_memory_peak_gib": 18.96417236328125,
+          "cpu_cores_mean": 1.0070908076308753,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 4,
+          "repeats": 1,
+          "successful_songs": 4,
+          "all_nontruncated": true,
+          "rpm": 2.432039977362381,
+          "mean_batch_seconds": 98.68258837598842,
+          "normalized_audio_throughput": 7.091774528655871,
+          "audio_seconds": [
+            [
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.432039977362381
+          ],
+          "peak_torch_allocated_gib": 12.359456062316895,
+          "gpu_memory_peak_gib": 19.84503173828125,
+          "cpu_cores_mean": 1.0088475853947125,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 5,
+          "repeats": 1,
+          "successful_songs": 5,
+          "all_nontruncated": true,
+          "rpm": 2.642142297655692,
+          "mean_batch_seconds": 113.54422517900821,
+          "normalized_audio_throughput": 7.68329108730947,
+          "audio_seconds": [
+            [
+              174.47866666666667,
+              174.47866666666667,
+              174.47866666666667,
+              174.47866666666667,
+              174.47866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.642142297655692
+          ],
+          "peak_torch_allocated_gib": 13.54353141784668,
+          "gpu_memory_peak_gib": 20.97393798828125,
+          "cpu_cores_mean": 1.009713040072456,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 6,
+          "repeats": 1,
+          "successful_songs": 6,
+          "all_nontruncated": true,
+          "rpm": 2.845089853456682,
+          "mean_batch_seconds": 126.53378928001621,
+          "normalized_audio_throughput": 8.296218788460719,
+          "audio_seconds": [
+            [
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.845089853456682
+          ],
+          "peak_torch_allocated_gib": 14.742849826812744,
+          "gpu_memory_peak_gib": 21.80792236328125,
+          "cpu_cores_mean": 1.0098885918732732,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 7,
+          "repeats": 1,
+          "successful_songs": 7,
+          "all_nontruncated": true,
+          "rpm": 2.9732728609453303,
+          "mean_batch_seconds": 141.25847833100124,
+          "normalized_audio_throughput": 8.66999758978634,
+          "audio_seconds": [
+            [
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666,
+              174.95866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.9732728609453303
+          ],
+          "peak_torch_allocated_gib": 15.944371700286865,
+          "gpu_memory_peak_gib": 22.92510986328125,
+          "cpu_cores_mean": 1.0112260930577768,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 8,
+          "repeats": 1,
+          "successful_songs": 8,
+          "all_nontruncated": true,
+          "rpm": 2.8924153866885183,
+          "mean_batch_seconds": 165.95126765299938,
+          "normalized_audio_throughput": 8.889292345858566,
+          "audio_seconds": [
+            [
+              184.39866666666666,
+              184.39866666666666,
+              184.39866666666666,
+              184.39866666666666,
+              184.39866666666666,
+              184.39866666666666,
+              184.39866666666666,
+              184.39866666666666
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.8924153866885183
+          ],
+          "peak_torch_allocated_gib": 17.14802598953247,
+          "gpu_memory_peak_gib": 23.99542236328125,
+          "cpu_cores_mean": 1.0109510943544626,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 9,
+          "repeats": 2,
+          "successful_songs": 18,
+          "all_nontruncated": true,
+          "rpm": 2.987504235824347,
+          "mean_batch_seconds": 180.7528817949933,
+          "normalized_audio_throughput": 9.177546623469375,
+          "audio_seconds": [
+            [
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667
+            ],
+            [
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            2.98803555044512,
+            2.9869731101203616
+          ],
+          "peak_torch_allocated_gib": 18.35118055343628,
+          "gpu_memory_peak_gib": 25.25714111328125,
+          "cpu_cores_mean": 1.0120993116098722,
+          "cpu_throttled_seconds": 0
+        },
+        {
+          "batch": 10,
+          "repeats": 2,
+          "successful_songs": 20,
+          "all_nontruncated": true,
+          "rpm": 3.0606148626921588,
+          "mean_batch_seconds": 196.03904016601155,
+          "normalized_audio_throughput": 9.402140844526695,
+          "audio_seconds": [
+            [
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667
+            ],
+            [
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667,
+              184.31866666666667
+            ]
+          ],
+          "per_repeat_rpm": [
+            3.064747229035341,
+            3.0564936251346215
+          ],
+          "peak_torch_allocated_gib": 19.494362354278564,
+          "gpu_memory_peak_gib": 26.62823486328125,
+          "cpu_cores_mean": 1.0123414507277846,
+          "cpu_throttled_seconds": 0
+        }
+      ],
+      "raw_rpm_best_batch": 10,
+      "duration_normalized_best_batch": 10
+    }
+  },
+  "note": "Do not rank unequal generated songs by raw RPM alone. Scores here describe these requests, within the conservative tested maximum. Every integer is screened, then leaders are repeated; repeat count differs by candidate.",
+  "equal_short_long_task_mix": {
+    "candidates": [
+      {
+        "batch": 1,
+        "rpm": 1.528117383232216,
+        "normalized_audio_throughput": 3.9756181005450766
+      },
+      {
+        "batch": 2,
+        "rpm": 2.528769075191044,
+        "normalized_audio_throughput": 5.272427326904989
+      },
+      {
+        "batch": 3,
+        "rpm": 3.075473691312939,
+        "normalized_audio_throughput": 6.534288092283084
+      },
+      {
+        "batch": 4,
+        "rpm": 3.4682555335354595,
+        "normalized_audio_throughput": 7.301756910924798
+      },
+      {
+        "batch": 5,
+        "rpm": 3.911489027368504,
+        "normalized_audio_throughput": 7.877651979141781
+      },
+      {
+        "batch": 6,
+        "rpm": 4.106852907307827,
+        "normalized_audio_throughput": 8.55311439155516
+      },
+      {
+        "batch": 7,
+        "rpm": 4.300305379883003,
+        "normalized_audio_throughput": 8.956007108827892
+      },
+      {
+        "batch": 8,
+        "rpm": 4.253049445209786,
+        "normalized_audio_throughput": 9.213428269262907
+      },
+      {
+        "batch": 9,
+        "rpm": 4.369165868718436,
+        "normalized_audio_throughput": 9.536335610214577
+      },
+      {
+        "batch": 10,
+        "rpm": 4.509549755956717,
+        "normalized_audio_throughput": 9.742030443901696
+      }
+    ],
+    "best_rpm_batch": 10,
+    "assumption": "50/50 short and long task counts; each length grouped separately; excludes batch-formation waiting."
+  },
+  "measured_songs": 148,
+  "successful_songs": 148
+}
