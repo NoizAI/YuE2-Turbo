@@ -168,3 +168,7 @@ YuE2-Turbo 基于 M-A-P 社区发布的 **YuE2** 构建。模型权重、演示�
 ## 开源许可
 
 本项目代码遵循 **[Apache 2.0](LICENSE)** 协议开源。YuE2 模型权重独立遵循 **[CC BY-NC 4.0](MODEL_LICENSE)** 非商业许可协议；第三方组件保留其[原始开源许可](THIRD_PARTY_NOTICES.md)。
+
+## 致谢
+
+感谢 [Linux.Do](https://linux.do)

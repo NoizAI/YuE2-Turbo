@@ -168,3 +168,7 @@ YuE2-Turbo builds on **YuE2** by the M-A-P community. For the model, demos, eval
 ## License
 
 Code in this repository is licensed under **[Apache 2.0](LICENSE)**. YuE2 model weights are separately licensed under **[CC BY-NC 4.0](MODEL_LICENSE)**; third-party components retain their [original licenses](THIRD_PARTY_NOTICES.md).
+
+## Acknowledgments
+
+Thanks to the [Linux.Do](https://linux.do)
