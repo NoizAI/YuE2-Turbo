@@ -86,7 +86,7 @@ curl -i http://127.0.0.1:8000/health/ready   # 加载阶段返回 503，就绪�
 YUE2_UPSTREAM=http://127.0.0.1:8000 yue2-web   # 默认监听 http://0.0.0.0:8016
 ```
 
-Studio 提供了可视化的单页音乐创作工作台：支持歌词与风格输入、作曲模式切换、ABC 乐谱预览、实时生成进度反馈、音频播放与结果下载。浏览器在请求时携带用户填入的 Bearer Token，网关本身不硬编码或持久化密钥。若在非受信网络暴露，建议在前端配置 HTTPS。
+Studio 提供了可视化的单页音乐创作工作台：支持歌词与风格输入、作曲模式切换、ABC 乐谱预览、可选的原曲上传翻唱、实时生成进度反馈、音频播放与结果下载。浏览器在请求时携带用户填入的 Bearer Token，网关本身不硬编码或持久化密钥。若在非受信网络暴露，建议在前端配置 HTTPS。
 
 ### 5. 调用 API
 
@@ -115,8 +115,35 @@ curl -X POST -H "Authorization: Bearer $YUE2_API_KEY" http://127.0.0.1:8000/v1/j
 | `GET /v1/jobs/{id}` | 查询任务详情：状态（`queued → running → succeeded / truncated / failed / cancelled`）、阶段、Token 统计、各阶段耗时 |
 | `POST /v1/jobs/{id}/cancel` | 取消任务（在下一个 Token / ODE 步 / VAE 分块边界处快速退出） |
 | `GET /v1/jobs/{id}/audio`, `/score` | 下载 FLAC 音频或 ABC 乐谱 |
+| `POST /v1/covers` | 翻唱：把上传的歌曲转成旋律后再生成（`YUE2_SHEETSAGE_DEVICE` 不能为 `off`） |
 
 队列已满时返回 `429`（附带 `Retry-After` 头）；服务未就绪时返回 `503`。生成产物默认按每个数据目录保留 24 小时或最多 5 GiB。若请求需要 CFG（`cfg_scale ≠ 1`）或关闭思维链（`cot="off"`），服务会自动平滑回退至原版 PyTorch 分支执行，无需人工干预。
+
+### 翻唱
+
+翻唱默认开启。`YUE2_SHEETSAGE_DEVICE` 默认是 `auto`。[SheetSage2](https://huggingface.co/m-a-p/SheetSage2) 只在第一次翻唱时加载，普通生成不会占用它的显存。它把上传的歌曲转成不含和弦的旋律 ABC，YuE2 再用 `cot=melody` 按给定风格和歌词生成。它不克隆原唱音色。
+
+`auto` 会在 YuE2 已经常驻之后看剩余显存：至少还有 `YUE2_SHEETSAGE_MIN_FREE_GIB`（默认 8 GiB）才把转谱放在 GPU 上并以 BF16 运行，否则留在 CPU 上用 FP32。24 GB 卡在生成服务常驻后通常走 CPU。CPU 转一首完整歌曲可能要数分钟，这段时间同样计入 `YUE2_TASK_TIMEOUT_SECONDS`。系统 `PATH` 里需要有 `ffmpeg`。`server` 附加依赖已经包含 SheetSage2 导入所需的 Python 包（`mir_eval`、`pretty_midi`、`mido`、`scipy`）。显式设为 `off` 可关闭翻唱。
+
+```bash
+curl -X POST http://127.0.0.1:8000/v1/covers \
+  -H "Authorization: Bearer $YUE2_API_KEY" \
+  -F "audio=@song.mp3" \
+  -F "style=Mandarin, piano pop, warm vocal" \
+  -F "lyrics=[Verse]
+晨光落在窗边
+[Chorus]
+让歌声陪伴你" \
+  -F "seed=42"
+```
+
+之后仍用原来的任务接口下载 FLAC 和旋律谱。Studio 里的入口是「上传歌曲翻唱」。网关只对 `POST /v1/covers` 放宽到 40 MB，其它请求仍是 256 KB。`YUE2_SHEETSAGE_DEVICE=off` 时该接口返回 503，并且不会保存音频。
+
+命令行会先转谱，再释放 SheetSage2 的权重，然后才加载 YuE2，避免两个模型同时留在显卡上：
+
+```bash
+yue2 cover --audio song.mp3 --request cover-request.json --sheetsage-device auto --output outputs/cover
+```
 
 ### 配置说明
 
@@ -140,6 +167,9 @@ curl -X POST -H "Authorization: Bearer $YUE2_API_KEY" http://127.0.0.1:8000/v1/j
 | `YUE2_ARTIFACT_RETENTION_SECONDS` / `YUE2_ARTIFACT_MAX_GIB` | `86400` / `5` | 产物自动清理策略（保留时长 / 空间上限） |
 | `YUE2_WARMUP` | `true` | 服务启动时自动运行预热任务 |
 | `YUE2_MODEL` / `YUE2_VAE` / `YUE2_LOCAL_FILES_ONLY` | HF 仓库 ID / `false` | 模型来源与离线加载模式 |
+| `YUE2_SHEETSAGE_DEVICE` | `auto` | 翻唱转谱：`auto`（空闲显存够则 GPU，否则 CPU）、`cpu`、`cuda`，或 `off`（关闭） |
+| `YUE2_SHEETSAGE_MIN_FREE_GIB` | `8` | `auto` 把 SheetSage2 放到 GPU 前要求的空闲显存（GiB） |
+| `YUE2_SHEETSAGE` / `YUE2_SHEETSAGE_REVISION` | `m-a-p/SheetSage2` / 未设置 | 启用翻唱时加载的 SheetSage2 快照 |
 
 设置 `YUE2_BACKEND=torch YUE2_RESIDENT_MODELS=false YUE2_AR_CONCURRENCY=1 YUE2_NAR_BATCH_SIZE=1 YUE2_AR_NAR_OVERLAP=false` 可在相同 API 接口下完全还原原版执行行为（即上表中“原版 YuE2”基准）。
 

@@ -21,6 +21,8 @@ FORWARDED_RESPONSE_HEADERS = {
     "accept-ranges", "retry-after", "www-authenticate",
 }
 AUTH_PROBE_JOB = "0" * 32
+JSON_BODY_LIMIT = 256 * 1024
+COVER_BODY_LIMIT = 40 * 1024 * 1024
 
 
 def create_app(upstream=None):
@@ -136,12 +138,14 @@ def create_app(upstream=None):
             return JSONResponse({"detail": "Not found"}, 404)
         if any(part in {".", ".."} for part in path.split("/")):
             return JSONResponse({"detail": "Invalid path"}, 400)
+        cover = request.method == "POST" and path == "v1/covers"
+        limit = COVER_BODY_LIMIT if cover else JSON_BODY_LIMIT
         body = bytearray()
         async for chunk in request.stream():
             body.extend(chunk)
-            if len(body) > 256 * 1024:
-                return JSONResponse(
-                    {"detail": "Request exceeds 256 KiB"}, 413)
+            if len(body) > limit:
+                detail = "Request exceeds 40 MiB" if cover else "Request exceeds 256 KiB"
+                return JSONResponse({"detail": detail}, 413)
         outgoing_headers = {
             key: request.headers[key] for key in FORWARDED_REQUEST_HEADERS
             if key in request.headers

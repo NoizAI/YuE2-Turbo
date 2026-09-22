@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager, suppress
 import fcntl
 import gc
+import hashlib
 import json
 import logging
 import os
@@ -21,12 +22,16 @@ import time
 import uuid
 from typing import Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from .cover import COVER_AUDIO_KEY, COVER_DISABLED, COVER_SHA_KEY, generation_fields
 from .service_store import IdempotencyConflict, JobStore, QueueFull, TERMINAL
+
+JSON_BODY_LIMIT = 256 * 1024
+COVER_BODY_LIMIT = 40 * 1024 * 1024
 
 log = logging.getLogger("yue2.service")
 
@@ -60,6 +65,10 @@ class Settings(BaseModel):
     artifact_cleanup_interval_seconds: int = Field(default=300, ge=10)
     warmup: bool = True
     local_files_only: bool = False
+    sheetsage: str = "m-a-p/SheetSage2"
+    sheetsage_revision: str | None = None
+    sheetsage_device: Literal["off", "cpu", "cuda", "auto"] = "auto"
+    sheetsage_min_free_gib: float = Field(default=8, gt=0, allow_inf_nan=False)
 
     @model_validator(mode="after")
     def compatible_backend(self):
@@ -174,8 +183,10 @@ class _AROverlapControl:
 
 
 class JobWorker:
-    def __init__(self, settings, factory):
+    def __init__(self, settings, factory, transcriber=None):
         self.settings, self.factory = settings, factory
+        self.transcriber = transcriber
+        self._transcriber_lock = threading.Lock()
         self.root = settings.data_dir.resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.store = JobStore(self.root / "jobs.sqlite3")
@@ -284,8 +295,34 @@ class JobWorker:
                 continue
             removed += 1
             removed_bytes += size
-        return {"removed": removed, "bytes": removed_bytes,
+        removed_covers, cover_bytes = self._cleanup_cover_audio(now)
+        return {"removed": removed + removed_covers, "bytes": removed_bytes + cover_bytes,
                 "remaining_bytes": max(0, total - removed_bytes)}
+
+    def _cleanup_cover_audio(self, now):
+        covers = self.root / "covers"
+        if not covers.is_dir():
+            return 0, 0
+        in_use = self.store.active_cover_audio()
+        cutoff = now - self.settings.artifact_retention_seconds
+        removed = removed_bytes = 0
+        for path in covers.iterdir():
+            if path.is_symlink() or not path.is_file():
+                continue
+            try:
+                resolved = str(path.resolve())
+                if resolved in in_use or path.stat().st_mtime >= cutoff:
+                    continue
+                size = path.stat().st_size
+                path.unlink()
+            except FileNotFoundError:
+                continue
+            except OSError:
+                log.warning("Could not remove expired cover audio %s", path, exc_info=True)
+                continue
+            removed += 1
+            removed_bytes += size
+        return removed, removed_bytes
 
     def cancel(self, job_id):
         job = self.store.cancel(job_id)
@@ -337,10 +374,7 @@ class JobWorker:
         if claimed is None:
             return None
         contexts = [self._context(job, request) for job, request in claimed]
-        supports = all(hasattr(self.pipeline, name) for name in (
-            "parallel_ar_eligible", "generate_ar", "render_ar"))
-        if not supports or not all(
-                self.pipeline.parallel_ar_eligible(context["request"]) for context in contexts):
+        if not all(self._parallel_ready(context) for context in contexts):
             return {"kind": "exclusive", "contexts": contexts}
         if not control.begin_ar(self.stop_event):
             return {"kind": "exclusive", "contexts": contexts}
@@ -526,11 +560,58 @@ class JobWorker:
         with self.lock:
             self.active.pop(context["job"]["id"], None)
 
+    def _melody_transcriber(self):
+        if self.transcriber is None:
+            with self._transcriber_lock:
+                if self.transcriber is None:
+                    from .cover import MelodyTranscriber
+                    self.transcriber = MelodyTranscriber(
+                        self.settings.sheetsage, revision=self.settings.sheetsage_revision,
+                        device=self.settings.sheetsage_device,
+                        local_files_only=self.settings.local_files_only,
+                        min_free_gib=self.settings.sheetsage_min_free_gib)
+        return self.transcriber
+
+    def _cover_audio_file(self, raw):
+        path = Path(raw)
+        root = (self.root / "covers").resolve()
+        if path.is_symlink():
+            raise ValueError("Cover audio is missing")
+        resolved = path.resolve()
+        if resolved.parent != root or resolved.suffix != ".bin" or not resolved.is_file():
+            raise ValueError("Cover audio is missing")
+        return resolved
+
+    def _transcribe_cover(self, context):
+        request = context["request"]
+        raw = request.get(COVER_AUDIO_KEY)
+        if not raw:
+            return
+        context["stage"]("transcribing")
+        if context["cancelled"]():
+            raise InterruptedError("Cancelled before transcription")
+        path = self._cover_audio_file(raw)
+        abc = self._melody_transcriber().transcribe(path)
+        request.pop(COVER_AUDIO_KEY, None)
+        request.pop(COVER_SHA_KEY, None)
+        request["abc"] = abc
+        request["cot"] = "melody"
+
+    def _parallel_ready(self, context):
+        supports = all(hasattr(self.pipeline, name) for name in (
+            "parallel_ar_eligible", "generate_ar", "render_ar"))
+        if not supports or context["request"].get(COVER_AUDIO_KEY):
+            return False
+        return self.pipeline.parallel_ar_eligible(generation_fields(context["request"]))
+
     def _execute_serial(self, context):
         try:
             if context["cancelled"]():
                 raise InterruptedError("Cancelled before generation")
-            result = self.pipeline(**context["request"], cancelled=context["cancelled"],
+            self._transcribe_cover(context)
+            if context["cancelled"]():
+                raise InterruptedError("Cancelled before generation")
+            result = self.pipeline(**generation_fields(context["request"]), cancelled=context["cancelled"],
                                    on_token=context["token"], on_stage=context["stage"])
             self._save_result(context, result)
             return False
@@ -559,7 +640,7 @@ class JobWorker:
                                 thread_name_prefix="yue2-ar") as executor:
             futures = {
                 context["job"]["id"]: executor.submit(
-                    self.pipeline.generate_ar, **context["request"],
+                    self.pipeline.generate_ar, **generation_fields(context["request"]),
                     cancelled=context["cancelled"], on_token=context["token"],
                     on_stage=context["stage"])
                 for context in contexts
@@ -698,18 +779,15 @@ class JobWorker:
         return rebuild | self._render_prepared_segment(contexts, prepared)
 
     def _execute_contexts(self, contexts):
-        supports = all(hasattr(self.pipeline, name) for name in (
-            "parallel_ar_eligible", "generate_ar", "render_ar"))
         rebuild, index = False, 0
         while index < len(contexts):
             context = contexts[index]
-            if not supports or not self.pipeline.parallel_ar_eligible(context["request"]):
+            if not self._parallel_ready(context):
                 rebuild |= self._execute_serial(context)
                 index += 1
                 continue
             end = index + 1
-            while (end < len(contexts)
-                   and self.pipeline.parallel_ar_eligible(contexts[end]["request"])):
+            while end < len(contexts) and self._parallel_ready(contexts[end]):
                 end += 1
             rebuild |= self._execute_parallel_segment(contexts[index:end])
             index = end
@@ -721,21 +799,24 @@ class JobWorker:
 
 
 class BodyLimit:
-    """Bound JSON buffering before validation, including chunked requests."""
-    def __init__(self, app, limit=256 * 1024):
-        self.app, self.limit = app, limit
+    """Bound request buffering before validation, including chunked requests."""
+    def __init__(self, app, limit=JSON_BODY_LIMIT, cover_limit=COVER_BODY_LIMIT):
+        self.app, self.limit, self.cover_limit = app, limit, cover_limit
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or scope["method"] != "POST":
             return await self.app(scope, receive, send)
+        cover = scope.get("path") == "/v1/covers"
+        limit = self.cover_limit if cover else self.limit
+        detail = "Request body exceeds 40 MiB" if cover else "Request body exceeds 256 KiB"
         body = bytearray()
         while True:
             message = await receive()
             if message["type"] == "http.disconnect":
                 return
             body.extend(message.get("body", b""))
-            if len(body) > self.limit:
-                return await JSONResponse({"detail": "Request body exceeds 256 KiB"}, status_code=413)(scope, receive, send)
+            if len(body) > limit:
+                return await JSONResponse({"detail": detail}, status_code=413)(scope, receive, send)
             if not message.get("more_body", False):
                 break
         delivered = False
@@ -749,9 +830,9 @@ class BodyLimit:
         await self.app(scope, replay, send)
 
 
-def create_app(settings=None, pipeline_factory=None):
+def create_app(settings=None, pipeline_factory=None, transcriber=None):
     settings = settings or Settings.from_env()
-    worker = JobWorker(settings, pipeline_factory or build_pipeline)
+    worker = JobWorker(settings, pipeline_factory or build_pipeline, transcriber=transcriber)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -827,6 +908,50 @@ def create_app(settings=None, pipeline_factory=None):
             raise HTTPException(503, "Inference worker is not ready", headers={"Retry-After": "5"})
         try:
             job, created = worker.store.submit(request.model_dump(exclude={"n"}), settings.max_pending, idempotency_key, n=request.n, admission_id=x_admission_id)
+        except QueueFull:
+            raise HTTPException(429, "Queue is full", headers={"Retry-After": "5"}) from None
+        except IdempotencyConflict:
+            raise HTTPException(409, "Idempotency-Key was already used with different input") from None
+        worker.wake.set()
+        return JSONResponse(job, status_code=202 if created else 200, headers={"Location": f"/v1/jobs/{job['id']}"})
+
+    @app.post("/v1/covers", status_code=202, dependencies=[Depends(authorize)])
+    async def cover(
+            audio: UploadFile = File(),
+            style: str = Form(),
+            lyrics: str = Form(),
+            seed: int = Form(default=831001),
+            cfg_scale: float | None = Form(default=None),
+            idempotency_key: str | None = Header(default=None, min_length=1, max_length=128),
+            x_admission_id: str | None = Header(default=None, max_length=128)):
+        if (worker.root / "draining").exists() or not worker.ready or worker.stop_event.is_set():
+            raise HTTPException(503, "Inference worker is not ready", headers={"Retry-After": "5"})
+        if settings.sheetsage_device == "off":
+            raise HTTPException(503, COVER_DISABLED)
+        payload = await audio.read()
+        if not payload:
+            raise HTTPException(422, "Audio file is empty")
+        if len(payload) > COVER_BODY_LIMIT:
+            raise HTTPException(413, "Request body exceeds 40 MiB")
+        try:
+            public = GenerateRequest(style=style, lyrics=lyrics, cot="melody", seed=seed, cfg_scale=cfg_scale)
+        except ValidationError as exc:
+            message = exc.errors()[0]["msg"] if exc.errors() else "Invalid cover request"
+            raise HTTPException(422, message) from None
+        digest = hashlib.sha256(payload).hexdigest()
+        covers = worker.root / "covers"
+        covers.mkdir(parents=True, exist_ok=True)
+        path = covers / f"{digest}.bin"
+        if not path.exists():
+            temporary = covers / f".{digest}.{uuid.uuid4().hex}.tmp"
+            temporary.write_bytes(payload)
+            temporary.replace(path)
+        request = public.model_dump(exclude={"n"})
+        request[COVER_AUDIO_KEY] = str(path)
+        request[COVER_SHA_KEY] = digest
+        try:
+            job, created = worker.store.submit(
+                request, settings.max_pending, idempotency_key, admission_id=x_admission_id)
         except QueueFull:
             raise HTTPException(429, "Queue is full", headers={"Retry-After": "5"}) from None
         except IdempotencyConflict:

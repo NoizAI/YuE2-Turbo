@@ -66,10 +66,28 @@ def wait_for(check, timeout=5):
     pytest.fail("Timed out waiting for worker state")
 
 
+class RecordingPipeline(FakePipeline):
+    def __call__(self, *, cancelled, on_stage=None, on_token=None, **kwargs):
+        self.seen = kwargs
+        return super().__call__(cancelled=cancelled, on_stage=on_stage, on_token=on_token, **kwargs)
+
+
+class FakeTranscriber:
+    def __init__(self, abc="X:1\nT:\n", error=None):
+        self.abc, self.error, self.calls = abc, error, []
+
+    def transcribe(self, audio):
+        self.calls.append(Path(audio))
+        if self.error:
+            raise self.error
+        return self.abc
+
+
 @contextmanager
-def service(tmp_path, fake=None, **options):
+def service(tmp_path, fake=None, transcriber=None, **options):
     fake = fake or FakePipeline()
-    app = create_app(Settings(api_key=KEY, data_dir=tmp_path, warmup=False, **options), lambda settings: fake)
+    app = create_app(Settings(api_key=KEY, data_dir=tmp_path, warmup=False, **options),
+                     lambda settings: fake, transcriber=transcriber)
     with TestClient(app, headers=HEADERS) as client:
         wait_for(lambda: client.get("/health/ready").status_code == 200)
         yield client, fake, app
@@ -272,6 +290,75 @@ def test_body_limit_before_parsing(tmp_path):
     with service(tmp_path) as (client, _, app):
         assert client.post("/v1/jobs", content=b" " * (256 * 1024 + 1)).status_code == 413
         assert client.post("/v1/jobs", json={**REQUEST, "abc": "", "cot": "full"}).status_code == 422
+        assert client.post("/v1/covers", content=b" " * (40 * 1024 * 1024 + 1)).status_code == 413
+
+
+def test_cover_disabled_when_device_is_off(tmp_path):
+    transcriber = FakeTranscriber()
+    with service(tmp_path, transcriber=transcriber, sheetsage_device="off") as (client, _, app):
+        response = client.post(
+            "/v1/covers",
+            files={"audio": ("song.wav", b"not-empty", "audio/wav")},
+            data={"style": REQUEST["style"], "lyrics": REQUEST["lyrics"]},
+        )
+        assert response.status_code == 503
+        assert "YUE2_SHEETSAGE_DEVICE" in response.json()["detail"]
+        assert transcriber.calls == []
+        assert not (tmp_path / "covers").exists()
+
+
+def test_cover_transcribes_melody_before_generation(tmp_path):
+    pipe, transcriber = RecordingPipeline(), FakeTranscriber()
+    with service(tmp_path, pipe, transcriber=transcriber, sheetsage_device="cpu") as (client, _, app):
+        audio = b"RIFFxxxx" + b"a" * (300 * 1024)
+        response = client.post(
+            "/v1/covers",
+            files={"audio": ("song.wav", audio, "audio/wav")},
+            data={"style": REQUEST["style"], "lyrics": REQUEST["lyrics"], "seed": "7"},
+        )
+        assert response.status_code == 202, response.text
+        job = terminal(client, response.json()["id"])
+        assert job["status"] == "succeeded"
+        assert pipe.seen["cot"] == "melody"
+        assert pipe.seen["abc"] == transcriber.abc
+        assert pipe.seen["seed"] == 7
+        assert "_cover_audio" not in pipe.seen
+        assert transcriber.calls and transcriber.calls[0].is_file()
+        assert client.post("/v1/covers", files={"audio": ("empty.wav", b"", "audio/wav")},
+                           data={"style": REQUEST["style"], "lyrics": REQUEST["lyrics"]}).status_code == 422
+
+
+def test_cover_transcription_failure_does_not_generate(tmp_path):
+    pipe = RecordingPipeline()
+    transcriber = FakeTranscriber(error=ValueError("no melody"))
+    with service(tmp_path, pipe, transcriber=transcriber, sheetsage_device="cpu") as (client, _, app):
+        response = client.post(
+            "/v1/covers",
+            files={"audio": ("song.wav", b"not-empty", "audio/wav")},
+            data={"style": REQUEST["style"], "lyrics": REQUEST["lyrics"]},
+        )
+        assert response.status_code == 202, response.text
+        job = terminal(client, response.json()["id"])
+        assert job["status"] == "failed"
+        assert pipe.calls == 0
+        assert transcriber.calls
+
+
+def test_cover_audio_path_stays_in_covers_directory(tmp_path):
+    worker = JobWorker(Settings(api_key=KEY, data_dir=tmp_path, warmup=False), lambda _: FakePipeline())
+    outside = tmp_path / "secret.bin"
+    outside.write_bytes(b"no")
+    with pytest.raises(ValueError):
+        worker._cover_audio_file(outside)
+    covers = tmp_path / "covers"
+    covers.mkdir()
+    target = covers / "song.bin"
+    target.write_bytes(b"ok")
+    alias = covers / "alias.bin"
+    alias.symlink_to(target)
+    with pytest.raises(ValueError):
+        worker._cover_audio_file(alias)
+    assert worker._cover_audio_file(target) == target.resolve()
 
 
 def test_store_atomic_capacity_under_parallel_submissions(tmp_path):

@@ -86,7 +86,7 @@ Interactive OpenAPI docs are at `http://127.0.0.1:8000/docs` (click **Authorize*
 YUE2_UPSTREAM=http://127.0.0.1:8000 yue2-web   # serves http://0.0.0.0:8016
 ```
 
-The Studio is a single-page creation console: lyrics, style, composition mode, optional ABC score, live progress, playback, and downloads. The browser sends its own bearer key on every call; the gateway never stores or embeds it. Put it behind HTTPS before exposing it beyond a trusted network.
+The Studio is a single-page creation console: lyrics, style, composition mode, optional ABC score, an optional source-audio upload for covers, live progress, playback, and downloads. The browser sends its own bearer key on every call; the gateway never stores or embeds it. Put it behind HTTPS before exposing it beyond a trusted network.
 
 ### 5. Call the API
 
@@ -115,8 +115,35 @@ curl -X POST -H "Authorization: Bearer $YUE2_API_KEY" http://127.0.0.1:8000/v1/j
 | `GET /v1/jobs/{id}` | Status: `queued → running → succeeded / truncated / failed / cancelled`, stage, token counts, timings |
 | `POST /v1/jobs/{id}/cancel` | Cancel at the next token / ODE step / decode chunk boundary |
 | `GET /v1/jobs/{id}/audio`, `/score` | Download FLAC and ABC |
+| `POST /v1/covers` | Cover: transcribe an uploaded song to a melody, then generate (`YUE2_SHEETSAGE_DEVICE` must not be `off`) |
 
 Queue full returns `429` with `Retry-After`; not ready returns `503`. Finished artifacts are kept for 24 h or 5 GiB per data directory by default. Requests with `cfg_scale ≠ 1` or `cot="off"` automatically use the original PyTorch path, so every request type is supported.
+
+### Cover a recording
+
+Covers are on by default. `YUE2_SHEETSAGE_DEVICE` defaults to `auto`. [SheetSage2](https://huggingface.co/m-a-p/SheetSage2) loads on the first cover, so ordinary generation does not spend its memory. It turns the upload into a chord-free melody ABC; YuE2 then realizes that melody with `cot=melody` in the requested style and lyrics. It does not clone the original singer.
+
+`auto` keeps the transcriber on GPU in BF16 only when at least `YUE2_SHEETSAGE_MIN_FREE_GIB` (default 8) is free **after** YuE2 is resident; otherwise it stays on CPU in FP32. A 24 GB card that is already running the resident service usually takes the CPU path. CPU transcription of a full song can take several minutes and still counts against `YUE2_TASK_TIMEOUT_SECONDS`. `ffmpeg` must be on `PATH`. The `server` extra installs the Python packages SheetSage2 imports (`mir_eval`, `pretty_midi`, `mido`, `scipy`). Set the variable to `off` to disable covers.
+
+```bash
+curl -X POST http://127.0.0.1:8000/v1/covers \
+  -H "Authorization: Bearer $YUE2_API_KEY" \
+  -F "audio=@song.mp3" \
+  -F "style=Mandarin, piano pop, warm vocal" \
+  -F "lyrics=[Verse]
+晨光落在窗边
+[Chorus]
+让歌声陪伴你" \
+  -F "seed=42"
+```
+
+The same job API returns the FLAC and the melody ABC. Studio exposes this as “上传歌曲翻唱”. The gateway allows a 40 MB body on `POST /v1/covers` only. With `YUE2_SHEETSAGE_DEVICE=off` the endpoint returns 503 and does not store the audio.
+
+From the command line, transcription runs first and the SheetSage2 weights are released before YuE2 loads, so the two models do not stay on the GPU together:
+
+```bash
+yue2 cover --audio song.mp3 --request cover-request.json --sheetsage-device auto --output outputs/cover
+```
 
 ### Configuration reference
 
@@ -140,6 +167,9 @@ All settings are environment variables prefixed `YUE2_`.
 | `YUE2_ARTIFACT_RETENTION_SECONDS` / `YUE2_ARTIFACT_MAX_GIB` | `86400` / `5` | Artifact cleanup policy |
 | `YUE2_WARMUP` | `true` | Run a short warmup song at startup |
 | `YUE2_MODEL` / `YUE2_VAE` / `YUE2_LOCAL_FILES_ONLY` | HF ids / `false` | Model sources |
+| `YUE2_SHEETSAGE_DEVICE` | `auto` | Cover transcription: `auto` (GPU when free memory is enough, otherwise CPU), `cpu`, `cuda`, or `off` |
+| `YUE2_SHEETSAGE_MIN_FREE_GIB` | `8` | Free GPU memory `auto` requires before placing SheetSage2 on GPU |
+| `YUE2_SHEETSAGE` / `YUE2_SHEETSAGE_REVISION` | `m-a-p/SheetSage2` / unset | SheetSage2 snapshot used when covers are enabled |
 
 Setting `YUE2_BACKEND=torch YUE2_RESIDENT_MODELS=false YUE2_AR_CONCURRENCY=1 YUE2_NAR_BATCH_SIZE=1 YUE2_AR_NAR_OVERLAP=false` reproduces the original execution behavior behind the same API; this is the "Original YuE2" baseline in the table above.
 

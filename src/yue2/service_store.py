@@ -215,6 +215,17 @@ class JobStore:
                 "items": [{"id": j["id"], "admission_id": j.get("admission_id"),
                            "stage": j["stage"], "units": 1} for j in jobs]}
 
+    def active_cover_audio(self):
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT request FROM jobs WHERE status IN ('queued','running')").fetchall()
+        paths = set()
+        for row in rows:
+            audio = json.loads(row[0]).get("_cover_audio")
+            if audio:
+                paths.add(str(Path(audio).resolve()))
+        return paths
+
     def artifact_records(self):
         """Return the minimal durable state needed by artifact retention."""
         with self.connect() as db:

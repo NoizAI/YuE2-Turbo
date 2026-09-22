@@ -36,6 +36,15 @@ def test_gateway_does_not_supply_credentials_or_expose_paths():
         ).status_code == 401
         assert seen[-1].headers["authorization"] == "Bearer test-only"
         assert client.post("/v1/jobs", content="x" * 262145).status_code == 413
+        forwarded = client.post(
+            "/v1/covers",
+            files={"audio": ("song.mp3", b"y" * (300 * 1024), "audio/mpeg")},
+            data={"style": "pop", "lyrics": "la"},
+        )
+        assert forwarded.status_code == 401
+        assert seen[-1].url.path == "/v1/covers"
+        assert len(seen[-1].content) > 256 * 1024
+        assert client.post("/v1/covers", content=b"z" * (40 * 1024 * 1024 + 1)).status_code == 413
         assert page.headers["x-frame-options"] == "DENY"
         app.state.client = original
 

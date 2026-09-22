@@ -101,7 +101,12 @@ def generate(args):
         data["lyrics"] = Path(args.lyrics_file).read_bytes().decode("utf-8")
     elif args.lyrics is not None:
         data["lyrics"] = args.lyrics
-    if args.abc_file:
+    if getattr(args, "abc_text", None):
+        if getattr(args, "abc_file", None) or data.get("abc") is not None or data.get("abc_path"):
+            raise ValueError("Cover audio replaces an ABC score")
+        data["abc"] = args.abc_text
+        data.pop("abc_path", None)
+    if getattr(args, "abc_file", None):
         data["abc"] = Path(args.abc_file).read_bytes().decode("utf-8")
         data.pop("abc_path", None)
     if not data:
@@ -122,7 +127,7 @@ def generate(args):
         raise FileExistsError(f"Nonempty output {directory}; use --resume or a new output directory")
     directory.mkdir(parents=True, exist_ok=True)
     try:
-        if args.stage == "plan":
+        if getattr(args, "stage", "audio") == "plan":
             kwargs.pop("semantic_sampling", None)
             plan = pipe.plan(**kwargs)
             plan.save(directory)
@@ -139,6 +144,24 @@ def generate(args):
         raise
     finally:
         pipe.close()
+
+
+def cover(args):
+    if args.cot not in (None, "melody"):
+        raise ValueError("Cover transcription uses cot=melody")
+    from .cover import MelodyTranscriber
+    args.cot = "melody"
+    args.stage = "audio"
+    args.abc_file = None
+    transcriber = MelodyTranscriber(
+        args.sheetsage, revision=args.sheetsage_revision, device=args.sheetsage_device,
+        local_files_only=args.offline, min_free_gib=args.sheetsage_min_free_gib,
+    )
+    try:
+        args.abc_text = transcriber.transcribe(args.audio)
+    finally:
+        transcriber.close()
+    return generate(args)
 
 
 def batch(args):
@@ -186,7 +209,7 @@ def batch(args):
 def parser():
     p = argparse.ArgumentParser(description="YuE2: style + lyrics → symbolic plan → song")
     sub = p.add_subparsers(dest="command", required=True)
-    for name in ("doctor", "generate", "batch"):
+    for name in ("doctor", "generate", "batch", "cover"):
         q = sub.add_parser(name)
         q.add_argument("--model")
         q.add_argument("--vae", default="standard", help="standard (listening), legacy (paper evaluation), local path or HF repo")
@@ -216,17 +239,24 @@ def parser():
                 q.add_argument("--style")
                 q.add_argument("--lyrics")
                 q.add_argument("--lyrics-file")
-                q.add_argument("--abc-file")
                 q.add_argument("--seed", type=int)
                 q.add_argument("--cfg-scale", type=float)
-                q.add_argument("--stage", choices=("plan", "audio"), default="audio")
+                if name == "cover":
+                    q.add_argument("--audio", type=Path, required=True)
+                    q.add_argument("--sheetsage", default="m-a-p/SheetSage2")
+                    q.add_argument("--sheetsage-revision")
+                    q.add_argument("--sheetsage-device", choices=("off", "cpu", "cuda", "auto"), default="auto")
+                    q.add_argument("--sheetsage-min-free-gib", type=float, default=8)
+                else:
+                    q.add_argument("--abc-file")
+                    q.add_argument("--stage", choices=("plan", "audio"), default="audio")
     return p
 
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     args = parser().parse_args(argv)
-    return {"doctor": doctor, "generate": generate, "batch": batch}[args.command](args)
+    return {"doctor": doctor, "generate": generate, "batch": batch, "cover": cover}[args.command](args)
 
 
 if __name__ == "__main__":
