@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="YuE" width="150" />
+  <img src="assets/yue2-turbo-logo.png" alt="YuE2 Turbo" width="460" />
 </p>
 
 <p align="center">
