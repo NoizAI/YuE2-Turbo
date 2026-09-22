@@ -27,6 +27,17 @@
 
 *Measured on one NVIDIA RTX 5090 (32 GB), PyTorch 2.10.0 + CUDA 12.8, vLLM 0.19.0, BF16, 32 ODE steps, after warmup. RTF = seconds of compute per second of generated audio: at RTF 0.17, a 60-second song takes about 10 seconds. Single request: 3 songs × 3 repeats. Concurrent: the same 4 requests per wave, 3 waves, wall time ÷ total audio generated. Reproduce with [`yue2-benchmark`](#reproduce-the-benchmark).*
 
+The accelerated path does not lose quality on the [WildSongBench](https://huggingface.co/datasets/m-a-p/WildSongBench) standard protocol. Each of 192 prompts is generated twice; the lower-PER candidate is scored against the published YuE2 row:
+
+| Metric | Original YuE2 | YuE2-Turbo |
+|---|---:|---:|
+| SongBench Avg ↑ | 6.7316 | 6.7623 |
+| MuLan ↑ | 0.5068 | 0.5069 |
+| AllMusicCaps ↑ | 0.4054 | 0.4087 |
+| PER ↓ | 8.44% | 8.18% |
+
+*One RTX 5090, vLLM with 4-way concurrency, BF16, 32 ODE steps, same released weights and generation recipe.*
+
 ## Environment
 
 | Requirement | Tested / recommended |
