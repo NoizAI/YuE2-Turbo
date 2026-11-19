@@ -18,7 +18,7 @@
   <a href="https://huggingface.co/m-a-p/YuE2-3B">🤗 权重下载</a>
 </p>
 
-**YuE2-Turbo 是面向 [YuE2](#关于-yue2) 的推理加速与生产服务化方案。** 在保持官方发布的 `YuE2-3B` 权重与标准生成规格（BF16、32 步 flow-matching 采样）完全一致的前提下，重构了底层执行架构：自回归（AR）阶段采用 **vLLM** 加速，全流程权重 **常驻 GPU 显存**，非自回归声学阶段（NAR）支持 **跨请求批处理**，并提供开箱即用的 **HTTP 异步任务 API + 网页版 Studio Web UI**，单张 GPU 即可高效承载多用户并发生成。
+**YuE2-Turbo 是面向 [YuE2](https://github.com/multimodal-art-projection/YuE) 的推理加速与生产服务化方案。** 在保持官方发布的 `YuE2-3B` 权重与标准生成规格（BF16、32 步 flow-matching 采样）完全一致的前提下，重构了底层执行架构：自回归（AR）阶段采用 **vLLM** 加速，全流程权重 **常驻 GPU 显存**，非自回归声学阶段（NAR）支持 **跨请求批处理**，并提供开箱即用的 **HTTP 异步任务 API + 网页版 Studio Web UI**，单张 GPU 即可高效承载多用户并发生成。
 
 | 场景 | 原版 YuE2 | YuE2-Turbo | 加速比 |
 |---|---:|---:|---:|
