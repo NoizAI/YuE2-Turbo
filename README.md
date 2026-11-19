@@ -18,7 +18,7 @@
   <a href="https://huggingface.co/m-a-p/YuE2-3B">🤗 Weights</a>
 </p>
 
-**YuE2-Turbo is an inference acceleration and serving layer for [YuE2](#about-yue2).** It keeps the released `YuE2-3B` weights and the standard generation recipe (BF16, 32 flow-matching steps) and replaces how they are executed: the autoregressive stages run on **vLLM**, all weights stay **resident on the GPU**, acoustic synthesis is **batched across requests**, and an **HTTP job API + browser Studio** turn one GPU into a concurrent song-generation service.
+**YuE2-Turbo is an inference acceleration and serving layer for [YuE2](https://github.com/multimodal-art-projection/YuE).** It keeps the released `YuE2-3B` weights and the standard generation recipe (BF16, 32 flow-matching steps) and replaces how they are executed: the autoregressive stages run on **vLLM**, all weights stay **resident on the GPU**, acoustic synthesis is **batched across requests**, and an **HTTP job API + browser Studio** turn one GPU into a concurrent song-generation service.
 
 | Scenario | Original YuE2 | YuE2-Turbo | Speedup |
 |---|---:|---:|---:|
